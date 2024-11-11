@@ -1,0 +1,68 @@
+package MongoDB;
+import java.util.Scanner;
+import com.mongodb.client.*;
+import org.bson.Document;
+
+public class MongoDB {
+    public static void displayData(MongoCollection<Document> collection, String field) {
+        for (Document doc : collection.find()) {
+            System.out.print(field + ": " + doc.get(field) + "\t");
+        }
+        System.out.println();
+    }
+
+    public static void main(String[] args) {
+        MongoClient mongoClient = MongoClients.create("mongodb://localhost:27017");
+        System.out.println("Connected to the database successfully");
+        Scanner sc = new Scanner(System.in);
+        String ans = "y";
+        while (ans.equalsIgnoreCase("y")) {
+            MongoDatabase database = mongoClient.getDatabase("Info");
+            MongoCollection<Document> collection = database.getCollection("Personal");
+            System.out.print("Enter the number of records you want to insert: ");
+            int n = sc.nextInt();
+            sc.nextLine();
+            for (int i = 0; i < n; i++) {
+                Document info = new Document();
+                System.out.println("Enter Data " + (i + 1));
+                System.out.print("Enter name: ");
+                String name = sc.nextLine();
+                info.append("Name", name);
+                System.out.print("Enter age: ");
+                int age = sc.nextInt();
+                info.append("Age", age);
+                System.out.print("Enter Mobile Number: ");
+                String mobileNo = sc.next();
+                info.append("Mobile Number", mobileNo);
+                sc.nextLine();
+                collection.insertOne(info);
+            }
+            System.out.println("Insert Operation");
+            displayData(collection, "Name");
+            displayData(collection, "Mobile Number");
+            displayData(collection, "Age");
+            System.out.print("Enter the number of records you want to delete: ");
+            n = sc.nextInt();
+            sc.nextLine();
+            for (int i = 0; i < n; i++) {
+                System.out.print("Enter name of the record to delete: ");
+                String nameToDelete = sc.nextLine();
+                collection.deleteOne(new Document("Name", nameToDelete));
+            }
+            System.out.println("Delete Operation");
+            displayData(collection, "Name");
+            displayData(collection, "Mobile Number");
+            displayData(collection, "Age");
+            System.out.print("Do you want to drop the database? (y/n): ");
+            ans = sc.nextLine();
+            if (ans.equalsIgnoreCase("y")) {
+                mongoClient.getDatabase("Info").drop();
+                System.out.println("Database Dropped");
+            }
+            System.out.print("Do you want to continue? (y/n): ");
+            ans = sc.nextLine();
+        }
+        sc.close();
+        mongoClient.close();
+    }
+}

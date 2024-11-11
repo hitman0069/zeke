@@ -1,0 +1,129 @@
+CREATE DATABASE library_system;
+USE library_system;
+
+Create TAbles: 
+
+CREATE TABLE authors (
+    author_id INT PRIMARY KEY,
+    name VARCHAR(100),
+    nationality VARCHAR(50)
+);
+
+CREATE TABLE books (
+    book_id INT PRIMARY KEY,
+    title VARCHAR(150),
+    author_id INT,
+    genre VARCHAR(50),
+    published_year INT,
+    FOREIGN KEY (author_id) REFERENCES authors(author_id)
+);
+
+CREATE TABLE members (
+    member_id INT PRIMARY KEY,
+    first_name VARCHAR(50),
+    last_name VARCHAR(50),
+    join_date DATE
+);
+
+CREATE TABLE loans (
+    loan_id INT PRIMARY KEY,
+    book_id INT,
+    member_id INT,
+    loan_date DATE,
+    return_date DATE,
+    FOREIGN KEY (book_id) REFERENCES books(book_id),
+    FOREIGN KEY (member_id) REFERENCES members(member_id)
+);
+
+CREATE TABLE payments (
+    payment_id INT PRIMARY KEY,
+    member_id INT,
+    amount DECIMAL(10, 2),
+    payment_date DATE,
+    FOREIGN KEY (member_id) REFERENCES members(member_id)
+);
+
+Insert Data :
+
+INSERT INTO authors (author_id, name, nationality) VALUES (1, 'Author One', 'CountryA');
+INSERT INTO books (book_id, title, author_id, genre, published_year) VALUES (1, 'Book Title 1', 1, 'Fiction', 2020);
+INSERT INTO members (member_id, first_name, last_name, join_date) VALUES (1, 'John', 'Doe', '2021-01-01');
+INSERT INTO loans (loan_id, book_id, member_id, loan_date, return_date) VALUES (1, 1, 1, '2023-01-01', '2023-01-10');
+INSERT INTO payments (payment_id, member_id, amount, payment_date) VALUES (1, 1, 100.00, '2023-02-01');
+
+1.Inner Join :
+
+SELECT loans.loan_id, books.title, members.first_name, members.last_name, loans.loan_date, loans.return_date
+FROM loans
+INNER JOIN books ON loans.book_id = books.book_id
+INNER JOIN members ON loans.member_id = members.member_id;
+
+2.Left Join :
+
+SELECT books.title, authors.name AS author_name
+FROM books
+LEFT JOIN authors ON books.author_id = authors.author_id;
+
+3.Right Join :
+
+SELECT authors.name AS author_name, books.title
+FROM authors
+RIGHT JOIN books ON authors.author_id = books.author_id;
+
+4.Full Outer Join:
+
+SELECT members.first_name, members.last_name, loans.loan_date, loans.return_date
+FROM members
+LEFT JOIN loans ON members.member_id = loans.member_id
+UNION
+SELECT members.first_name, members.last_name, loans.loan_date, loans.return_date
+FROM loans
+RIGHT JOIN members ON members.member_id = loans.member_id;
+
+5.Self Join:
+
+SELECT b1.title AS book1, b2.title AS book2, b1.author_id
+FROM books b1
+INNER JOIN books b2 ON b1.author_id = b2.author_id AND b1.book_id <> b2.book_id;
+
+6.Subquery in SELECT for each member's total payments:
+
+SELECT member_id, 
+       (SELECT SUM(amount) FROM payments WHERE payments.member_id = members.member_id) AS total_payments
+FROM members;
+
+7.Subquery in WHERE to find members who have borrowed books by "Author Name":
+
+SELECT first_name, last_name
+FROM members
+WHERE member_id IN (
+    SELECT loans.member_id
+    FROM loans
+    JOIN books ON loans.book_id = books.book_id
+    JOIN authors ON books.author_id = authors.author_id
+    WHERE authors.name = 'Author Name'
+);
+
+
+8.Create a View for member loan history:
+
+
+CREATE VIEW MemberLoanHistory AS
+SELECT members.first_name, members.last_name, books.title, loans.loan_date, loans.return_date
+FROM members
+JOIN loans ON members.member_id = loans.member_id
+JOIN books ON loans.book_id = books.book_id;
+
+9.Use the View to retrieve loan history for a specific member:
+
+SELECT * FROM MemberLoanHistory WHERE first_name = 'John' AND last_name = 'Doe';
+
+10.Aggregate with Join to calculate total loans per genre:
+
+SELECT books.genre, COUNT(loans.loan_id) AS total_loans
+FROM books
+LEFT JOIN loans ON books.book_id = loans.book_id
+GROUP BY books.genre;
+
+
+
